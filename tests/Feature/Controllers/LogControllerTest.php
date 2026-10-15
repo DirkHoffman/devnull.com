@@ -7,6 +7,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Commit;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 it('renders own commits and commits of followed users newest first', function (): void {
     $user = User::factory()->create();
@@ -49,6 +50,22 @@ it('renders commits of everyone newest first', function (): void {
             ->has('commits.data', 2)
             ->where('commits.data.0.body', 'Newer')
             ->where('commits.data.1.body', 'Older'));
+});
+
+it('renders the github context of commits', function (): void {
+    Http::fake(['api.github.com/repos/laravel/framework/issues/5123' => Http::response(['title' => 'Add follower page', 'state' => 'open'])]);
+
+    $user = User::factory()->create();
+
+    Commit::factory()->for($user)->create(['body' => 'Merged laravel/framework#5123']);
+
+    $response = $this->actingAs($user)
+        ->get('/log/following');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('commits.data.0.github_links.0.label', 'laravel/framework#5123')
+            ->where('commits.data.0.github_card.title', 'Add follower page'));
 });
 
 it('paginates the log', function (Log $log): void {

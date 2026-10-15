@@ -3,7 +3,9 @@ import { Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import CommitController from '@/actions/App/Http/Controllers/CommitController';
+import { GitHubCard } from '@/components/github-card';
 import { GraphRail } from '@/components/graph-rail';
+import { LinkedText } from '@/components/linked-text';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
 import { UserPreview } from '@/components/user-preview';
@@ -193,9 +195,17 @@ export function CommitCard({
                                 rm {hash} → /dev/null
                             </p>
                         ) : (
-                            <p className="mt-0.5 text-[15px] leading-relaxed break-words whitespace-pre-wrap">
-                                {commit.body}
-                            </p>
+                            <>
+                                <p className="mt-0.5 text-[15px] leading-relaxed break-words whitespace-pre-wrap">
+                                    <LinkedText
+                                        text={commit.body}
+                                        links={commit.github_links}
+                                    />
+                                </p>
+                                {commit.github_card && (
+                                    <GitHubCard card={commit.github_card} />
+                                )}
+                            </>
                         )}
 
                         {actions}

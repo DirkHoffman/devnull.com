@@ -1,4 +1,5 @@
 import type { User } from '@/types/auth';
+import type { GitHubCard, GitHubLink } from '@/types/github';
 
 export type CommitStatus = 'pending' | 'approved' | 'rejected';
 
@@ -10,6 +11,8 @@ export type Commit = {
     created_at: string;
     updated_at: string;
     user: User;
+    github_links: GitHubLink[];
+    github_card: GitHubCard | null;
 };
 
 export type CursorPaginated<T> = {

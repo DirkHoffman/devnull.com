@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\Commit;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 it('renders a user profile', function (): void {
     $user = User::factory()->create(['username' => 'octocat']);
@@ -58,6 +59,22 @@ it('does not count the user relations or activity when reloading only commits', 
     expect(array_column(DB::getQueryLog(), 'query'))
         ->not->toBeEmpty()
         ->each(fn ($query) => $query->not->toContain('count(*)')->not->toContain('exists'));
+});
+
+it('renders the github context of commits', function (): void {
+    Http::fake(['api.github.com/repos/laravel/framework/issues/5123' => Http::response(['title' => 'Add follower page', 'state' => 'open'])]);
+
+    $user = User::factory()->create(['username' => 'octocat']);
+
+    Commit::factory()->for($user)->create(['body' => 'Merged laravel/framework#5123']);
+
+    $response = $this->actingAs(User::factory()->create())
+        ->get('/@octocat');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('commits.data.0.github_links.0.label', 'laravel/framework#5123')
+            ->where('commits.data.0.github_card.title', 'Add follower page'));
 });
 
 it('renders the user commit activity for the last year', function (): void {
